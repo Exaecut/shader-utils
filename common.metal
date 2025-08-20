@@ -62,7 +62,7 @@ inline float4 imageReadLinear(device const float4 *data, uint pitch_px,
   return mix(cx0, cx1, f.y);
 }
 
-// -------------------- imageReadLinear (bilinear) : half4 --------------------
+// imageReadLinear (bilinear) : half4
 inline float4 imageReadLinear(device const half4 *data, uint pitch_px, uint2 wh,
                               float2 uv_tr) {
   float2 p = pix_coords(uv_tr, wh);
