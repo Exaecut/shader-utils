@@ -14,7 +14,7 @@ inline uint2 clamp_xy(uint2 xy, uint2 wh) {
   return uint2(x, y);
 }
 
-// imageRead / imageWrite (float4)
+// imageRead / imageWrite (float4) 32-bits
 inline float4 imageRead(device const float4 *data, uint pitch_px, uint2 wh,
                         uint2 xy) {
   xy = clamp_xy(xy, wh);
