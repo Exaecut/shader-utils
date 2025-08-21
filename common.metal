@@ -9,6 +9,7 @@ using namespace metal;
 #include "maths/easing.metal"
 
 // Image manipulation
+#include "image/coords.metal"
 #include "image/2d.metal"
 
 
