@@ -1,0 +1,93 @@
+#include <metal_stdlib>
+using namespace metal;
+
+/// Compute 2D Gaussian weight at integer offset (x,y).
+inline float gaussian_weight(int x, int y, float sigma)
+{
+	float s2 = sigma * sigma;
+	return exp(-(x * x + y * y) / (2.0f * s2));
+}
+
+/// One-pass 2D Gaussian blur
+/// - tex: source image
+/// - uv: normalized coordinates
+/// - sigma: standard deviation of Gaussian
+/// - radius: how many pixels around to sample (commonly ~3*sigma)
+template <typename Image>
+inline float4 gaussian_2d(Image tex, float2 uv, float sigma, int radius)
+{
+	float4 sum = float4(0.0);
+	float weight_sum = 0.0;
+
+	for (int y = -radius; y <= radius; ++y)
+	{
+		for (int x = -radius; x <= radius; ++x)
+		{
+			float w = gaussian_weight(x, y, sigma);
+			float2 offset = float2(x, y) / float2(tex.size_px); // pixel offset to UV
+			float4 c = tex.sample_linear(uv + offset);
+
+			sum += c * w;
+			weight_sum += w;
+		}
+	}
+
+	return sum / weight_sum;
+}
+
+/// Linear radial (zoom) blur sampled along the ray from `center` to `uv`.
+/// - `strength` in [0..1]: how far we march toward the center (0 = none, 1 = up to center).
+/// - `center`: blur origin in normalized UV.
+/// - `influence` in [0..1]: radius falloff; effective blur amount is
+///    smoothstep(1 - influence, 1, r), where r is distance from center (aspect-corrected).
+///    Examples:
+///      influence=1.0 -> full blur everywhere.
+///      influence=0.5 -> no blur at center, reaches full blur at ~50% radius.
+///      influence=0.25 -> clear until ~75% radius, then ramps to full.
+/// - `aspect`: width/height to keep the influence field circular on non-square frames.
+/// - Implementation details:
+///   * Uses N taps with linearly spaced positions between uv and center.
+///   * Triangle weights (heavier near the original sample) to reduce banding.
+template <typename Storage, typename Layout = layout_rgba>
+inline float4 radial_blur_linear(image_2d<const Storage, Layout> src,
+								 float2 uv,
+								 float strength,
+								 float2 center,
+								 float influence,
+								 float aspect)
+{
+	float2 direction = (uv - center) * strength;
+	int samples = 128;
+
+    if (influence <= 0.0001f) {
+        return src.sample_linear(uv);
+    }
+
+	float weight_accum = 0.0;
+	float4 color_accum = float4(0.0);
+
+	float influence_mask = smoothstep(1.0f - influence, 1.0f, length(direction));
+
+	for (int x = 0; x < samples; ++x)
+	{
+		float progression = (float(x) + 1.0f) / float(samples);
+		float2 offset = float2(uv.x + (direction.x * influence_mask * progression), uv.y + (direction.y * influence_mask * progression));
+
+		float weight = 1.0 - progression;
+		color_accum += src.sample_linear_mirror(offset) * weight;
+		weight_accum += weight;
+	}
+
+	return color_accum / max(weight_accum, 1e-6f);
+}
+
+/// Overload with default aspect = 1.0 (square pixels).
+template <typename Storage, typename Layout = layout_rgba>
+inline float4 radial_blur_linear(image_2d<const Storage, Layout> src,
+								 float2 uv,
+								 float strength,
+								 float2 center,
+								 float influence)
+{
+	return radial_blur_linear(src, uv, strength, center, influence, 1.0f);
+}

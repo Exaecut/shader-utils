@@ -98,33 +98,20 @@ inline float4 weighted_mix(float4 a, float4 b, float t)
 	float3 rgb = (a.xyz * ow + b.xyz * iw) * recip;
 	return float4(rgb, new_a);
 }
+/// Helpers to convert between float4 and storage types
+inline float4 to_float4(float4 v) { return v; }
+inline float4 to_float4(half4 v) { return float4(v); }
 
-/// Storage traits to normalize const-qualified storage types
 template <typename T>
-struct storage_traits;
+inline T from_float4(float4 v);
 
 template <>
-struct storage_traits<float4>
-{
-	using base = float4;
-};
-template <>
-struct storage_traits<const float4>
-{
-	using base = float4;
-};
-template <>
-struct storage_traits<half4>
-{
-	using base = half4;
-};
-template <>
-struct storage_traits<const half4>
-{
-	using base = half4;
-};
+inline float4 from_float4<float4>(float4 v) { return v; }
 
-/// Layout policies: define how channels map between memory and RGBA
+template <>
+inline half4 from_float4<half4>(float4 v) { return half4(v); }
+
+/// Layout policies
 struct layout_rgba
 {
 	inline float4 to_rgba(float4 c) const { return c; }
@@ -148,58 +135,84 @@ struct layout_bgra
 template <typename Storage, typename Layout = layout_rgba>
 struct image_2d
 {
-	using Base = typename storage_traits<Storage>::base;
-
 	device Storage *data;
 	uint pitch_px;
 	uint2 size_px;
 	Layout layout;
 
-	// load/store bridge
-	inline float4 load(float4 s) const { return s; }
-	inline float4 load(half4 s) const { return float4(s); }
-
-	inline float4 store(float4 f) const { return f; }
-	inline half4 store(float4 f) const { return half4(f); }
-
 	/// Read at integer coords.
 	inline float4 read(uint2 xy) const
 	{
-		return layout.to_rgba(load(image_read((device const Base *)data,
-											  pitch_px, size_px, xy)));
+		xy = clamp_xy(xy, size_px);
+		return layout.to_rgba((float4)data[index_of(xy, pitch_px)]);
 	}
 
 	/// Write at integer coords.
 	inline void write(uint2 xy, float4 c)
 	{
-		image_write((device Base *)data, pitch_px, size_px, xy,
-					store(layout.from_rgba(c)));
+		xy = clamp_xy(xy, size_px);
+		data[index_of(xy, pitch_px)] = (Storage)layout.from_rgba(c);
 	}
 
 	/// Sample nearest at normalized UV.
 	inline float4 sample_nearest(float2 uv) const
 	{
 		uint2 xy = clamp_xy(uint2(pixel_coord(uv, size_px) + 0.5f), size_px);
-		return layout.to_rgba(load(image_read((device const Base *)data,
-											  pitch_px, size_px, xy)));
+		return layout.to_rgba((float4)data[index_of(xy, pitch_px)]);
 	}
 
 	/// Sample bilinear at normalized UV.
 	inline float4 sample_linear(float2 uv) const
 	{
-		return layout.to_rgba(load(image_read_linear((device const Base *)data,
-													 pitch_px, size_px, uv)));
+		return layout.to_rgba(
+			image_read_linear(data, pitch_px, size_px, uv));
 	}
 
-	/// Read unchecked
+	    /// Sample bilinear with repeat addressing.
+    inline float4 sample_linear_repeat(float2 uv) const
+    {
+        float2 uv_wrapped = fract(uv); // wrap into [0,1)
+        return layout.to_rgba(
+            image_read_linear(data, pitch_px, size_px, uv_wrapped));
+    }
+
+    /// Sample nearest with repeat addressing.
+    inline float4 sample_nearest_repeat(float2 uv) const
+    {
+        float2 uv_wrapped = fract(uv); // wrap into [0,1)
+        uint2 xy = clamp_xy(uint2(pixel_coord(uv_wrapped, size_px) + 0.5f), size_px);
+        return layout.to_rgba((float4)data[index_of(xy, pitch_px)]);
+    }
+
+    /// Sample bilinear with mirror addressing.
+    inline float4 sample_linear_mirror(float2 uv) const
+    {
+        float2 uv_mirrored = abs(fract(uv * 0.5f) * 2.0f - 1.0f); // mirror repeat
+		uv_mirrored.x = 1.0 - uv_mirrored.x;
+		uv_mirrored.y = 1.0 - uv_mirrored.y;
+        return layout.to_rgba(
+            image_read_linear(data, pitch_px, size_px, float2(uv_mirrored.x, uv_mirrored.y)));
+    }
+
+    /// Sample nearest with mirror addressing.
+    inline float4 sample_nearest_mirror(float2 uv) const
+    {
+        float2 uv_mirrored = abs(fract(uv * 0.5f) * 2.0f - 1.0f); // mirror repeat
+		uv_mirrored.y = 1.0 - uv_mirrored.y;
+        uint2 xy = clamp_xy(uint2(pixel_coord(uv_mirrored, size_px) + 0.5f), size_px);
+        return layout.to_rgba((float4)data[index_of(xy, pitch_px)]);
+    }
+
+
+	/// Read without bounds check.
 	inline float4 read_unchecked(uint2 xy) const
 	{
-		return layout.to_rgba(load(((device const Base *)data)[index_of(xy, pitch_px)]));
+		return layout.to_rgba((float4)data[index_of(xy, pitch_px)]);
 	}
 
-	/// Write unchecked
+	/// Write without bounds check.
 	inline void write_unchecked(uint2 xy, float4 c)
 	{
-		((device Base *)data)[index_of(xy, pitch_px)] = store(layout.from_rgba(c));
+		data[index_of(xy, pitch_px)] = (Storage)layout.from_rgba(c);
 	}
 };
