@@ -54,40 +54,33 @@ inline float4 radial_blur_linear(image_2d<const Storage, Layout> src,
 								 float strength,
 								 float2 center,
 								 float influence,
-								 float aspect)
+								 uint2 gid)
 {
 	float2 direction = (uv - center) * strength;
-	int samples = 128;
+	int samples = 16;
 
-    if (influence <= 0.0001f) {
-        return src.sample_linear(uv);
-    }
+	if (influence <= 0.0001f)
+	{
+		return src.sample_linear(uv);
+	}
 
 	float weight_accum = 0.0;
 	float4 color_accum = float4(0.0);
 
 	float influence_mask = smoothstep(1.0f - influence, 1.0f, length(direction));
 
-	for (int x = 0; x < samples; ++x)
+	float rand = fract(sin(dot(float2(gid), float2(12.9898f, 78.233f))) * 43758.5453f);
+	for (int i = 0; i < samples; ++i)
 	{
-		float progression = (float(x) + 1.0f) / float(samples);
-		float2 offset = float2(uv.x + (direction.x * influence_mask * progression), uv.y + (direction.y * influence_mask * progression));
+		float progression = ((float(i) + 0.5f) + (rand - 0.5f)) / float(samples);
+		float2 offset = uv + direction * influence_mask * progression;
 
-		float weight = 1.0 - progression;
+		float weight = (1.0f - progression);
+		weight *= weight;
+
 		color_accum += src.sample_linear_mirror(offset) * weight;
 		weight_accum += weight;
 	}
 
 	return color_accum / max(weight_accum, 1e-6f);
-}
-
-/// Overload with default aspect = 1.0 (square pixels).
-template <typename Storage, typename Layout = layout_rgba>
-inline float4 radial_blur_linear(image_2d<const Storage, Layout> src,
-								 float2 uv,
-								 float strength,
-								 float2 center,
-								 float influence)
-{
-	return radial_blur_linear(src, uv, strength, center, influence, 1.0f);
 }
