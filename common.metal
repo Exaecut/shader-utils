@@ -1,8 +1,9 @@
+#include "dsl.h"
+
 #ifndef UTILS_COMMON_METAL
 #define UTILS_COMMON_METAL
 
-#include <metal_stdlib>
-using namespace metal;
+#include stdlib;
 
 // Maths
 #include "maths/trigonometry.metal"
@@ -14,6 +15,5 @@ using namespace metal;
 
 // Image filters
 #include "filters/blur.metal"
-
 
 #endif // UTILS_COMMON_METAL
