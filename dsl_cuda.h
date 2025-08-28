@@ -1,9 +1,7 @@
 #pragma once
 // CUDA backend: emulate key Metal patterns while staying idiomatic CUDA.
 
-#define stdlib <cuda_runtime.h>
-
-#include stdlib;
+#include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #include <math.h>
 #include <stdint.h>

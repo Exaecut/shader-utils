@@ -3,8 +3,6 @@
 #ifndef UTILS_COMMON_METAL
 #define UTILS_COMMON_METAL
 
-#include stdlib;
-
 // Maths
 #include "maths/trigonometry.metal"
 #include "maths/easing.metal"

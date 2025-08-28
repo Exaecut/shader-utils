@@ -1,9 +1,7 @@
 #pragma once
 
-#define stdlib <metal_stdlib>; \
-using namespace metal
-
-#include stdlib;
+#include <metal_stdlib>
+using namespace metal;
 
 // ---------- address spaces and qualifiers ----------
 #define restrict                       __restrict

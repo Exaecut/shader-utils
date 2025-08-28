@@ -1,8 +1,6 @@
 #ifndef MATHS_EASING_METAL
 #define MATHS_EASING_METAL
 
-#include stdlib;
-
 /// Clamp input to [0,1] to ensure valid easing domain
 inline float clamp01(float t) {
     return clamp(t, 0.0f, 1.0f);
