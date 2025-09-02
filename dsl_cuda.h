@@ -1,4 +1,3 @@
-#pragma once
 // CUDA backend: emulate key Metal patterns while staying idiomatic CUDA.
 
 #include <cuda_runtime.h>

@@ -84,3 +84,50 @@ inline float4 radial_blur_linear(image_2d<const Storage, Layout> src,
 
 	return color_accum / max(weight_accum, 1e-6f);
 }
+
+/// Directional blur along an angle.
+/// - `angle_deg`: direction in degrees (0 = +X, 90 = +Y).
+/// - `strength`: length of blur (normalized, ~0..1).
+/// - `spread`: controls noise/jitter spread of taps (0 = uniform, >0 = noisier).
+template <typename Storage, typename Layout = layout_rgba>
+inline float4 directional_blur_linear(image_2d<const Storage, Layout> src,
+                                      float2 uv,
+                                      float angle_deg,
+                                      float strength,
+                                      float spread,
+                                      uint2 gid)
+{
+    // Convert angle to radians
+    float angle = radians(angle_deg);
+
+    // Direction vector
+    float2 dir = float2(cos(angle), sin(angle)) * strength;
+
+    int samples = 32;
+
+    float weight_accum = 0.0;
+    float4 color_accum = float4(0.0);
+
+    // Stable per-pixel random jitter
+    float rand = fract(sin(dot(float2(gid), float2(12.9898f, 78.233f))) * 43758.5453f);
+
+    for (int i = 0; i < samples; ++i)
+    {
+        float progression = (float(i) + 0.5f) / float(samples);
+
+        // Add jitter based on spread
+        float jitter = (rand - 0.5f) * spread / float(samples);
+
+        float2 offset = uv + dir * (progression + jitter);
+
+        // Triangle weighting (stronger near center sample)
+        // float weight = (1.0f - progression);
+        // weight *= weight;
+		float weight = exp(-progression * progression * 4.0);
+
+        color_accum += src.sample_linear_mirror(offset) * weight;
+        weight_accum += weight;
+    }
+
+    return color_accum / max(weight_accum, 1e-6f);
+}

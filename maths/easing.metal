@@ -102,4 +102,31 @@ inline float spring_ease(float t, float stiffness, float damping, float mass) {
     }
 }
 
+// Easing utils
+enum easing_mode : uint
+{
+	easing_ease_in_out = 0,
+	easing_ease_in = 1,
+	easing_ease_out = 2,
+	easing_linear,
+};
+
+
+inline float apply_easing(float progress, uint mode, float exponent)
+{
+	switch (mode)
+	{
+	case easing_mode::easing_ease_in_out:
+		return ease_in_out(progress, exponent);
+	case easing_mode::easing_ease_in:
+		return ease_in(progress, exponent);
+	case easing_mode::easing_ease_out:
+		return ease_out(progress, exponent);
+	case easing_mode::easing_linear:
+		return progress;
+	default:
+		return progress;
+	}
+}
+
 #endif // MATHS_EASING_METAL
