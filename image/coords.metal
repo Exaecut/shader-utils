@@ -48,6 +48,12 @@ inline float2 scale_uv(float2 uv, float2 scale)
     return centered + 0.5;
 }
 
+inline float2 uniform_aspect_ratio(float2 uv, uint2 size_px)
+{
+    float aspect = float(size_px.x) / float(size_px.y);
+    return scale_uv(uv, float2(aspect, 1.0));
+}
+
 /// Overload for uniform scale
 inline float2 scale_uv(float2 uv, float scale)
 {

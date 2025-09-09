@@ -4,6 +4,7 @@
 #define UTILS_COMMON_METAL
 
 // Maths
+#include "maths/transform.metal"
 #include "maths/trigonometry.metal"
 #include "maths/easing.metal"
 
