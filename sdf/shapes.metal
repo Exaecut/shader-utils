@@ -69,17 +69,26 @@ namespace shapes
 		return length(p) * sign(p.x);
 	}
 
-	inline float moon(float2 uv, float2 center, float d, float ra, float rb)
+	inline float moon(float2 uv, float2 center, float angle, float distance, float outer_radius, float inner_radius)
 	{
 		float2 p = uv - center;
+
+		// rotation
+		float c = cos(angle);
+		float s = sin(angle);
+		p = float2(c * p.x - s * p.y, s * p.x + c * p.y);
+
 		p.y = fabs(p.y);
-		float a = (ra * ra - rb * rb + d * d) / (2.0 * d);
-		float b = sqrt(max(ra * ra - a * a, 0.0));
-		if (d * (p.x * b - p.y * a) > d * d * max(b - p.y, 0.0))
+
+		float a = (outer_radius * outer_radius - inner_radius * inner_radius + distance * distance) / (2.0 * distance);
+		float b = sqrt(max(outer_radius * outer_radius - a * a, 0.0));
+
+		if (distance * (p.x * b - p.y * a) > distance * distance * max(b - p.y, 0.0))
 		{
 			return length(p - float2(a, b));
 		}
-		return max(length(p) - ra, -(length(p - float2(d, 0)) - rb));
+
+		return max(length(p) - outer_radius, -(length(p - float2(distance, 0)) - inner_radius));
 	}
 
 	inline float oriented_vesica(float2 uv, float2 center, float2 size, float angle)
