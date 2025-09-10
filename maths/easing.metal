@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef MATHS_EASING_METAL
 #define MATHS_EASING_METAL
 

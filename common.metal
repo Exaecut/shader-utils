@@ -1,3 +1,4 @@
+#pragma once
 #include "dsl.h"
 
 #ifndef UTILS_COMMON_METAL

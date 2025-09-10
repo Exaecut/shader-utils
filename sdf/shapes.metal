@@ -1,3 +1,4 @@
+#pragma once
 #include "maths/trigonometry.metal"
 
 namespace shapes
@@ -50,6 +51,7 @@ namespace shapes
 	{
 		float2 p = uv - center;
 
+		angle += radians(180.0);
 		float c = cos(angle);
 		float s = sin(angle);
 		p = float2(c * p.x - s * p.y, s * p.x + c * p.y);
@@ -60,7 +62,8 @@ namespace shapes
 		float2 acs = float2(cos(angleStep), sin(angleStep));
 		float2 ecs = float2(cos(innerAngle), sin(innerAngle));
 
-		float localAngle = fmod(atan2(p.x, p.y), 2.0 * angleStep) - angleStep;
+		float localAngle = atan2(p.x, p.y);
+		localAngle = fmod(fmod(localAngle, 2.0 * angleStep) + 2.0 * angleStep, 2.0 * angleStep) - angleStep;
 		p = length(p) * float2(cos(localAngle), fabs(sin(localAngle)));
 
 		p -= radius * acs;

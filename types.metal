@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef USE_HALF_PRECISION
     typedef half4 pixel_format;
 #else
