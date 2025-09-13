@@ -118,23 +118,36 @@ namespace shapes
 				   -(length(local - float2(d, 0.0)) - rb));
 	}
 
-	inline float heart(float2 uv, float2 center, float radius)
+	inline float heart(float2 uv, float2 center, float radius, float angle)
 	{
-		float2 p = (uv - center) / radius;
+		float2 p = uv - center;
+		angle += radians(180.0);
+		float c = cos(angle), s = sin(angle);
+		p = float2(c * p.x - s * p.y, s * p.x + c * p.y);
+
+		p /= radius;
+		p.y += 0.5;
+
 		p.x = fabs(p.x);
 
 		if (p.y + p.x > 1.0)
 		{
-			return (length(p - float2(0.25, 0.75)) - sqrt(2.0) / 4.0) * radius;
+			return (length(p - float2(0.25, 0.75)) - sqrt(2.0) * 0.25) * radius;
 		}
+
 		float2 a = p - float2(0.0, 1.0);
 		float2 b = p - 0.5 * max(p.x + p.y, 0.0);
 		return (min(length(a), length(b)) * sign(p.x - p.y)) * radius;
 	}
 
-	inline float rounded_x(float2 uv, float2 center, float width, float radius)
+	inline float rounded_x(float2 uv, float2 center, float width, float radius, float angle)
 	{
-		float2 p = abs(uv - center);
+		float2 p = uv - center;
+		float c = cos(angle), s = sin(angle);
+		p = float2(c * p.x - s * p.y, s * p.x + c * p.y);
+		p = abs(p);
+
 		return length(p - min(p.x + p.y, width) * 0.5) - radius;
 	}
+
 }
