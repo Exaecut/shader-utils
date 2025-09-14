@@ -71,4 +71,27 @@ namespace tonemapping
 		return float4(out_rgb, a);
 	}
 
+	inline float4 exposure_linear_pipeline(float4 src_rgba_linear, float EV, bool premultiplied)
+	{
+		float3 rgb = src_rgba_linear.rgb;
+		float a = src_rgba_linear.a;
+
+		if (premultiplied && a > 0.0f)
+		{
+			rgb /= a; // un-premultiply for correct color ops
+		}
+
+		// exposure in linear
+		float3 lin_exposed = apply_exposure_linear(rgb, EV); // * 2^EV
+
+		// optional tone map for LDR targets - keep if you want display-referred output
+		float3 lin_mapped = aces_filmic(lin_exposed);
+
+		if (premultiplied)
+		{
+			lin_mapped *= a; // re-premultiply
+		}
+
+		return float4(lin_mapped, a);
+	}
 }

@@ -13,7 +13,4 @@
 #include "image/coords.metal"
 #include "image/2d.metal"
 
-// Image filters
-#include "filters/blur.metal"
-
 #endif // UTILS_COMMON_METAL
