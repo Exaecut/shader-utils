@@ -36,10 +36,10 @@ inline float4 gaussian_1d(Image tex, float2 uv, float sigma, int radius, bool ve
 	weight_sum += wc;
 
 	// Symmetric taps
-	for (int i = 1; i <= radius; ++i)
+	for (int i = 1; i <= radius / 3; ++i)
 	{
 		float w = gaussian_weight_1d(i, sigma);
-		float2 offset = dir * (float(i) * texel_size);
+		float2 offset = dir * (float(i * 3) * texel_size);
 
 		float4 c1 = tex.sample_linear(uv + offset);
 		float4 c2 = tex.sample_linear(uv - offset);
