@@ -8,6 +8,13 @@ inline float gaussian_weight(int x, int y, float sigma)
 	return exp(-(x * x + y * y) / (2.0f * s2));
 }
 
+// 1D Gaussian at integer offset
+inline float gaussian_weight_1d(int x, float sigma)
+{
+	float s2 = sigma * sigma;
+	return exp(-(float(x * x)) / (2.0f * s2));
+}
+
 /// One-pass separable Gaussian blur (horizontal or vertical)
 /// - tex: source image (must have .size_px and .sample_linear(uv))
 /// - uv: normalized coordinates
