@@ -61,12 +61,17 @@ shader-utils/
 
 ## Add as a submodule
 
-````bash
-git submodule add <YOUR_ORIGIN>/exaecut/shader-utils.gthird_party/shader-utilsThen include headers from `third_party/shader-utilsChoose backend
+```bash
+git submodule add <YOUR_ORIGIN>/exaecut/shader-utils.gthird_party/shader-utilsThen include headers from `third_party/shader-utils
+```
+
+Choose backend
+
 - **CUDA build**: define `SUPPORT_CUDA`.
 - **Metal build**: do not define `SUPPORT_CUDA`.
 
 ### CMake sketch
+
 ```cmake
 add_library(exaecut_shader_utils INTERFACE)
 target_include_directories(exaecut_shader_utils INTERFACE
